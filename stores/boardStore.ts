@@ -1,36 +1,65 @@
-import { defineStore } from 'pinia';
-import { useStorage } from '@vueuse/core';
-import boardData from '../data/board.json';
+import { v4 as uuid } from 'uuid'
+import { defineStore } from 'pinia'
+import { useStorage } from '@vueuse/core'
+import boardData from '~/data/board.json'
 
 export const useBoardStore = defineStore('boardStore', () => {
-    const board = useStorage('board', boardData);
+  const board = useStorage('board', boardData)
 
-    const getTask = computed(() => {
-        return taskId => {
-            for (const column of board.value.columns) {
-                const task = column.tasks.find(task => task.id === taskId);
-                if (task) {
-                    return task;
-                }
-            }
-        }
+  /**
+   * Tasks
+   */
+  const getTask = computed(() => {
+    return taskId => {
+      for (const column of board.value.columns) {
+        const task = column.tasks.find(task => task.id === taskId)
+        if (task) return task
+      }
+    }
+  })
+
+  function addTask({ columnIndex, taskName }) {
+    board.value.columns[columnIndex].tasks.push({
+      id: uuid(),
+      name: taskName,
+      description: ''
     })
+  }
 
-    function addColumn(columnName) {
-        board.value.columns.push({
-            name: columnName,
-            tasks: []
-        });
-    }
+  function deleteTask(taskId) {
+    for (const column of board.value.columns) {
+      const taskIndex = column.tasks.findIndex(task => task.id === taskId)
 
-    function deleteColumn(columnIndex) {
-        board.value.columns.splice(columnIndex, 1)
+      if (taskIndex !== -1) {
+        column.tasks.splice(taskIndex, 1)
+        return
+      }
     }
+  }
 
-    return {
-        board,
-        getTask,
-        addColumn,
-        deleteColumn
-    }
-});
+  /**
+   * Columns
+   */
+  function addColumn(columnName) {
+    board.value.columns.push({
+      name: columnName,
+      tasks: []
+    })
+  }
+
+  function deleteColumn(columnIndex) {
+    board.value.columns.splice(columnIndex, 1)
+  }
+
+  return {
+    /* State */
+    board,
+    /* Getters */
+    getTask,
+    /* Actions*/
+    addColumn,
+    addTask,
+    deleteColumn,
+    deleteTask
+  }
+})
